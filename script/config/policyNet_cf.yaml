@@ -1,0 +1,23 @@
+PolicyNetwork: # Policy network parameters
+  n_layers: 2
+  layer_size: 64
+  gamma: 1.0
+  learning_rate: 0.01
+  use_baseline: false
+  use_reward_to_go: false
+  baseline_learning_rate: 0.01
+  baseline_gradient_steps: 10
+  gae_lambda: 0.97
+  normalize_advantages: true
+
+PGAgent: # PGAgent
+  n_layers: 2
+  layer_size: 64
+  gamma: 0.9
+  learning_rate: 0.01
+  use_baseline: false
+  use_reward_to_go: false
+  baseline_learning_rate: 0.01
+  baseline_gradient_steps: 10
+  gae_lambda: 0.97
+  normalize_advantages: true

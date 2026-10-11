@@ -1,0 +1,86 @@
+<mujoco model="rotary_inverted_pendulum">
+  <compiler angle="radian" autolimits="true"/>
+
+  <option timestep="0.001" iterations="4" ls_iterations="8">
+    <flag contact="disable" eulerdamp="disable"/>
+  </option>
+
+  <default>
+    <geom contype="0" conaffinity="0"/>
+    <joint damping="0.005"/>
+  </default>
+
+  <visual>
+    <headlight ambient="0.4 0.4 0.4" diffuse="0.8 0.8 0.8" specular="0.1 0.1 0.1"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <global azimuth="120" elevation="-20"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="512"/>
+    <texture name="grid" type="2d" builtin="checker" width="512" height="512" rgb1="0.1 0.2 0.3" rgb2="0.2 0.3 0.4"/>
+    <material name="grid" texture="grid" texrepeat="1 1" texuniform="true" reflectance="0.2"/>
+    <material name="stand" rgba="0.3 0.3 0.35 1"/>
+    <material name="arm" rgba="0.1 0.5 0.8 1"/>
+    <material name="pendulum" rgba="0.9 0.3 0.2 1"/>
+    <material name="weight" rgba="0.95 0.7 0.1 1"/>
+    <material name="joint_hub" rgba="0.2 0.2 0.2 1"/>
+  </asset>
+
+  <worldbody>
+    <geom name="floor" size="1.5 1.5 0.05" type="plane" material="grid"/>
+    <light name="light" pos="0 0 2" dir="0 0 -1" directional="true"/>
+
+    <!-- Cameras -->
+    <camera name="fixed" pos="0 -1.2 0.8" xyaxes="1 0 0 0 0.6 0.8"/>
+    <camera name="top" pos="0 0 1.5" xyaxes="1 0 0 0 1 0"/>
+    <camera name="track" mode="trackcom" pos="0 -1.2 0.8" xyaxes="1 0 0 0 0.6 0.8"/>
+
+    <!-- Fixed Stand / Base -->
+    <body name="base" pos="0 0 0">
+      <geom name="base_plate" type="cylinder" size="0.12 0.01" pos="0 0 0.01" material="stand"/>
+      <geom name="base_post" type="cylinder" size="0.025 0.2" pos="0 0 0.2" material="stand"/>
+      <geom name="motor_housing" type="cylinder" size="0.04 0.04" pos="0 0 0.4" material="joint_hub"/>
+
+      <!-- Rotary Arm (Actuated) -->
+      <body name="rotary_arm" pos="0 0 0.44">
+        <!-- Rotates around vertical Z-axis -->
+        <joint name="arm_joint" type="hinge" axis="0 0 1" damping="0.05" />
+        <geom name="arm_hub" type="cylinder" size="0.035 0.015" pos="0 0 0" material="joint_hub"/>
+        <geom name="arm_rod" type="capsule" fromto="0 0 0 0.2 0 0" size="0.01" material="arm" mass="0.15"/>
+
+        <!-- Inverted Pendulum (Passive) at the end of the arm -->
+        <body name="pendulum" pos="0.2 0 0">
+          <!-- Revolves around the tangential axis (0 1 0 when arm is along X) -->
+          <joint name="pendulum_joint" type="hinge" axis="1 0 0" damping="0.001" />
+          <geom name="pendulum_hub" type="sphere" size="0.018" material="joint_hub"/>
+          <!-- Pole: upright position points in +Z direction, length 0.24m -->
+          <geom name="pole" type="capsule" fromto="0 0 0 0 0 0.24" size="0.007" material="pendulum" mass="0.08"/>
+          <!-- Tip bob mass -->
+          <geom name="tip_bob" type="sphere" size="0.018" pos="0 0 0.24" material="weight" mass="0.05"/>
+          <!-- Tip site for tracking / reward computation -->
+          <site name="tip" pos="0 0 0.24" size="0.01"/>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <!-- Motor controlling the horizontal rotary arm -->
+    <motor name="arm_motor" joint="arm_joint" gear="1" ctrlrange="-2.0 2.0" ctrllimited="true"/>
+  </actuator>
+
+  <sensor>
+    <!-- Joint position sensors -->
+    <jointpos name="arm_pos" joint="arm_joint"/>
+    <jointpos name="pendulum_pos" joint="pendulum_joint"/>
+
+    <!-- Joint velocity sensors -->
+    <jointvel name="arm_vel" joint="arm_joint"/>
+    <jointvel name="pendulum_vel" joint="pendulum_joint"/>
+
+    <!-- Tip site position and linear velocity -->
+    <framepos name="tip_pos" objtype="site" objname="tip"/>
+    <framelinvel name="tip_vel" objtype="site" objname="tip"/>
+  </sensor>
+</mujoco>
